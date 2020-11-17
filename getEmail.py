@@ -7,7 +7,7 @@ from email.header import decode_header
 import webbrowser
 import csv 
 
-output = open('mail.csv', 'w', newline='', encoding='utf-8')
+output = open('data/mail.csv', 'w', newline='', encoding='utf-8')
 csvwriter = csv.writer(output)
 col_names = ['expediteur', 'destinataire', 'date et heure', 'sujet', 'contenu']
 
