@@ -9,12 +9,12 @@ import csv
 
 output = open('mail.csv', 'w', newline='', encoding='utf-8')
 csvwriter = csv.writer(output)
-col_names = ['expediteur', 'destinataire', 'date et heure', 'sujet', 'contenu']
+col_names = ['expediteur','date et heure', 'sujet',  'destinataire', 'contenu']
+csvwriter.writerow(col_names)
 
 # https://www.thepythoncode.com/article/reading-emails-in-python
-email_user = input('Email: ')
-# email_user = "bourratmathis@gmail.com"
-email_pass = getpass.getpass('password: ')
+# email_user = input('Email: ')
+# email_pass = getpass.getpass('password: ')
 
 mail = imaplib.IMAP4_SSL("imap.gmail.com", 993)
 N = 10
@@ -22,13 +22,18 @@ mail.login(email_user, email_pass)
 status, messages = mail.select('INBOX')
 
 
-messages = int(messages[0])
+nbMessages = int(messages[0])
+print(nbMessages)
 
 
 
-for i in range(messages, messages-N, -1):
+for i in range(nbMessages, 0, -1):
     mail_line = []
     mail_line.append(email_user)
+    date = None 
+    subject = None
+    From = None
+    body = None
     # fetch the email message by ID
     res, msg = mail.fetch(str(i), "(RFC822)")
     for response in msg:
@@ -36,18 +41,22 @@ for i in range(messages, messages-N, -1):
             # parse a bytes email into a message object
             msg = email.message_from_bytes(response[1])
             # decode the email subject
-            subject = decode_header(msg["Subject"])[0][0]
+            try:  
+                subject = decode_header(msg["Subject"])[0][0]
+            except:
+                pass
+            # subject = decode_header(msg["Subject"])[0][0]
             date = decode_header(msg["Date"])[0][0]
             if isinstance(subject, bytes):
                 # if it's a bytes, decode to str
-                subject = subject.decode()
+                try:  
+                    subject = subject.decode()
+                except:
+                    pass
             # decode email sender
             From, encoding = decode_header(msg.get("From"))[0]
             if isinstance(From, bytes):
                 From = From.decode(encoding)
-            mail_line.append(date)
-            mail_line.append(subject)
-            mail_line.append(From)
             # if the email message is multipart
             if msg.is_multipart():
                 # iterate over email parts
@@ -60,9 +69,9 @@ for i in range(messages, messages-N, -1):
                         body = part.get_payload(decode=True).decode()
                     except:
                         pass
-                    if content_type == "text/plain" and "attachment" not in content_disposition:
+                    # if content_type == "text/plain" and "attachment" not in content_disposition:
                         # print text/plain emails and skip attachments
-                        mail_line.append(body)
+                        # mail_line.append(body)
                     # elif "attachment" in content_disposition:
                     #     # download attachment
                     #     filename = part.get_filename()
@@ -77,10 +86,15 @@ for i in range(messages, messages-N, -1):
                 # extract content type of email
                 content_type = msg.get_content_type()
                 # get the email body
-                body = msg.get_payload(decode=True).decode()
-                if content_type == "text/plain":
+                try:
+                        # get the email body
+                        
+                    body = msg.get_payload(decode=True).decode()
+                except:
+                        pass
+                # if content_type == "text/plain":
                     # print only text email parts
-                    mail_line.append(body)
+                    # mail_line.append(body)
             # if content_type == "text/html":
             #     # if it's HTML, create a new HTML file and open it in browser
             #     if not os.path.isdir(subject):
@@ -94,6 +108,10 @@ for i in range(messages, messages-N, -1):
             #     webbrowser.open(filepath)
             # print("="*100)
 # close the connection and logout
+    mail_line.append(date)
+    mail_line.append(subject)
+    mail_line.append(From)
+    mail_line.append(body)
     csvwriter.writerow(mail_line)
 output.close()
 mail.close()
