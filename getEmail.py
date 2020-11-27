@@ -13,9 +13,7 @@ h = html2text.HTML2Text()
 # Ignore converting links from HTML
 h.ignore_links = True
 
-ts = time.time()
-file = "mail"+str(ts)+".csv"
-output = open("mail.csv", 'w', newline='', encoding='utf-8')
+output = open("data/mail.csv", 'w', newline='', encoding='utf-8')
 csvwriter = csv.writer(output)
 col_names = ['expediteur','date et heure', 'sujet',  'destinataire', 'contenu']
 csvwriter.writerow(col_names)
@@ -93,7 +91,8 @@ for i in range(nbMessages, 0, -1):
             # print(content_type)
             if content_type != "text/plain":
                 try:
-                    body = h.handle(body)
+                    body = str(h.handle(body)).rstrip("\n")
+
                 except:
                         pass
 # close the connection and logout
