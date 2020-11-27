@@ -93,7 +93,8 @@ for i in range(nbMessages, 0, -1):
             # print(content_type)
             if content_type != "text/plain":
                 try:
-                    body = h.handle(body)
+                    body = str(h.handle(body)).rstrip("\n")
+
                 except:
                         pass
 # close the connection and logout
