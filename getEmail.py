@@ -6,24 +6,32 @@ import getpass
 from email.header import decode_header
 import webbrowser
 import csv 
+import html2text
 
-output = open('data/mail.csv', 'w', newline='', encoding='utf-8')
+
+h = html2text.HTML2Text()
+# Ignore converting links from HTML
+h.ignore_links = True
+
+ts = time.time()
+file = "mail"+str(ts)+".csv"
+output = open("mail.csv", 'w', newline='', encoding='utf-8')
 csvwriter = csv.writer(output)
 col_names = ['expediteur','date et heure', 'sujet',  'destinataire', 'contenu']
 csvwriter.writerow(col_names)
 
 # https://www.thepythoncode.com/article/reading-emails-in-python
-# email_user = input('Email: ')
-# email_pass = getpass.getpass('password: ')
+email_user = input('Email: ')
+email_pass = getpass.getpass('password: ')
+mailServer = input("Serveur mail (exemple: imap.gmail.com pour gmail, mail.etu.umontpellier.fr pour le mail etu): ")
+mail = imaplib.IMAP4_SSL(mailServer)
 
-mail = imaplib.IMAP4_SSL("imap.gmail.com", 993)
-N = 10
+
 mail.login(email_user, email_pass)
 status, messages = mail.select('INBOX')
 
-
 nbMessages = int(messages[0])
-print(nbMessages)
+print("Nombre de mail dans la boite :",nbMessages)
 
 
 
@@ -56,7 +64,10 @@ for i in range(nbMessages, 0, -1):
             # decode email sender
             From, encoding = decode_header(msg.get("From"))[0]
             if isinstance(From, bytes):
-                From = From.decode(encoding)
+                try:  
+                    From = From.decode(encoding)
+                except:
+                    pass
             # if the email message is multipart
             if msg.is_multipart():
                 # iterate over email parts
@@ -69,19 +80,6 @@ for i in range(nbMessages, 0, -1):
                         body = part.get_payload(decode=True).decode()
                     except:
                         pass
-                    # if content_type == "text/plain" and "attachment" not in content_disposition:
-                        # print text/plain emails and skip attachments
-                        # mail_line.append(body)
-                    # elif "attachment" in content_disposition:
-                    #     # download attachment
-                    #     filename = part.get_filename()
-                    #     if filename:
-                    #         if not os.path.isdir(subject):
-                    #             # make a folder for this email (named after the subject)
-                    #             os.mkdir(subject)
-                    #         filepath = os.path.join(subject, filename)
-                    #         # download attachment and save it
-                    #         open(filepath, "wb").write(part.get_payload(decode=True))
             else:
                 # extract content type of email
                 content_type = msg.get_content_type()
@@ -92,21 +90,12 @@ for i in range(nbMessages, 0, -1):
                     body = msg.get_payload(decode=True).decode()
                 except:
                         pass
-                # if content_type == "text/plain":
-                    # print only text email parts
-                    # mail_line.append(body)
-            # if content_type == "text/html":
-            #     # if it's HTML, create a new HTML file and open it in browser
-            #     if not os.path.isdir(subject):
-            #         # make a folder for this email (named after the subject)
-            #         os.mkdir(subject)
-            #     filename = f"{subject[:50]}.html"
-            #     filepath = os.path.join(subject, filename)
-            #     # write the file
-            #     open(filepath, "w").write(body)
-            #     # open in the default browser
-            #     webbrowser.open(filepath)
-            # print("="*100)
+            # print(content_type)
+            if content_type != "text/plain":
+                try:
+                    body = h.handle(body)
+                except:
+                        pass
 # close the connection and logout
     mail_line.append(date)
     mail_line.append(subject)
